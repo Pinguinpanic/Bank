@@ -17,7 +17,7 @@ npm install package.json
 ### Starting the Bank
 To start the bank in the App directory run the following command
 ```
-node app.js
+npm start
 ```
 
 ## What it do?
@@ -143,4 +143,10 @@ debit | String | amount of money that was removed
 credit | String | amount of money that was added
 description | String | A description of the event that took place
 
+## Are you sure?
 
+In the App directory run
+```
+npm test
+```
+to run the suite suite on the application.
