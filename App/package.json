@@ -1,0 +1,14 @@
+{
+  "name": "bank",
+  "version": "0.0.0",
+  "description": "simple bank rest api",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Bob de Vries",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.4"
+  }
+}
