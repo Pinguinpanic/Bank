@@ -1,0 +1,193 @@
+API Bank
+
+NOTE: SEMAPHORES ARROUND ALL DATABASE DOING
+NOTE: THE RESULT IS THE STATE WHEN ASKED!!
+NOTE: TESTING FOR TYPES? JUST TO PREVENT MEDLING
+
+Store everything in a file, only do things to it monolithic
+
+DATA MODEL
+
+ACCOUNT
+id (key), number, hash to prevent mistakes? hash without collisions
+name
+balance
+auditlist (dataset for all my audits)
+lastaudit (id of last audit, starts at 0 means no audits yet)
+
+AUDIT
+id (reference to account)
+sequence (number, incrementing) (id+sequence = key)
+debit (amount removed)
+credit (amount added)
+description: "withdraw","deposit", "send to #id", "receive from #id"
+
+INTEGRATION TESTS
+all operations
+random sequences (long)
+random sequences + audit (long)
+
+
+
+
+API calls
+
+POST /acount
+Request = name account
+Result = id,name,balance
+
+Bank balance = 0
+Account numbers are unique
+
+ERROR: name should not be null
+
+TESTS
+Name is null gives error
+Check bank balance = 0 after create
+Resulting acount has correct name
+Do big tests with lots of account to verify number is unique
+
+
+GET /acount/:id
+
+Return id,name,balance
+
+ERROR: Not Null
+ERROR: account doesn't exist
+
+TESTS
+id is null gives error
+Doesn't exist gives error
+Returned id, name and balance is same as internal state
+
+
+
+
+POST /acount/:id/deposit
+
+Request = amount
+Result = id,name,balance
+
+Add entry for audit
+
+Amount to deposit is positive
+
+ERROR: nothing null
+ERROR: account doesn't exist
+ERROR: amount is not positive (0 or <0)
+
+TESTS:
+Both not null error
+Account doesn't exist error works
+Amount 0 gives error
+Amount <0 gives error
+For all tests: after check if nothing changed
+
+Balance is increased by amount
+
+Audit sequence increments
+Audit debit = amount
+Audit credit = 0
+Audit description = "deposit"
+
+
+
+
+
+
+POST /acount/;id/withdraw
+
+Request=amount
+Result= id,name,balance
+
+Only withdraw positive
+
+ERROR: nothing null
+ERROR: account doesn't exist
+ERROR: amount is not positive (0 or <0)
+ERROR: resulting balance < 0
+
+TESTS:
+Both not null error
+Account doesn't exist error works
+Amount 0 gives error
+Amount <0 gives error
+Resulting balance <0 gives error
+For all tests: after check if nothing changed
+
+
+Balance is decreased by amount
+Balance is decreased by amount even if result is 0 
+
+Audit sequence increments
+Audit debit = 0
+Audit credit = amount
+Audit description = "withdraw"
+
+
+
+
+
+POST /acount/;id/send
+
+Request = amount, id
+Result = amount,id,balance
+
+Not to self, sending account>0, only>0
+
+ERROR: nothing null
+ERROR: account doesn't exist
+ERROR: amount is not positive (0 or <0)
+ERROR: resulting balance <0
+ERROR: target account does not exist
+ERROR: sending account = receiving acount
+
+
+TESTS:
+Both not null error
+Account doesn't exist error works
+Amount 0 gives error
+Amount <0 gives error
+Resulting balance <0 gives error
+Target acount does not exist give error
+Sending account = receiving account gives error
+For all tests: after check if nothing changed
+
+Balance is decreased by amount
+Balance is decreased by amount even if result is 0 
+Receiving balance is increased by amount
+One check to see both happens
+
+For sending thing:
+Audit sequence increments
+Audit debit = amount
+Audit credit = 0
+Audit description = "send to #id"
+
+For receiving thing:
+Audit sequence increments
+Audit debit = 0
+Audit credit = amount
+Audit description = "receive from #id"
+
+
+
+GET /acount/:id/audit
+
+request = empty
+result = list of all audits from lastaudit to 1, ommit credit or debit if 0 (sequence,debit,description)
+in case of no audits, empty list
+
+ERROR: id not null
+ERROR: account doesn't exist
+
+TESTS:
+id not null error
+account doesn't exist give error
+returned in reverse chronological order
+return empty for empty audit
+
+
+
+
+
