@@ -79,3 +79,30 @@ app.post('/account/:id/deposit',function(req,res) {
 		}
 	}
 });
+
+app.post('/account/:id/withdraw',function(req,res) {
+	if(typeof req.params.id == 'undefined' || req.params.id==null){
+		res.status(400).send('You forgot to give a request id.');
+	}
+	else if(typeof req.body.amount == 'undefined' || req.body.amount==null){
+		res.status(400).send('You forgot to send the amount to withdraw.');
+	}
+	else {
+		var id = req.params.id;
+		if(!(id in innerState)) {
+			res.status(400).send('Trying to withdraw for none existing account with id '+id);
+		}
+		else if(req.body.amount<=0) {
+			res.status(400).send('Requested withdraw amount is not >0');
+		}
+		else {
+			if(req.body.amount>innerState[id].balance) {
+				res.status(400).send('Requested withdraw amount is higher then the balance.');
+			}		
+			else {
+				innerState[id].balance-=req.body.amount;
+				res.status(200).send(innerState[id]);
+			}
+		}
+	}
+});
