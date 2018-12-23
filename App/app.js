@@ -1,5 +1,5 @@
 /**
- * This is responsible for starting the application.
+ * This script is responsible for starting the application, and (for now) has the guts of the application.
  */
 
 //Load Express and put it into our App
@@ -10,6 +10,9 @@ app.use(bodyParser.json());
 
 var mapOfIds = [];
 
+/**
+ * Generate a unique id in the range [10000...99999]
+ */
 function getNewId(){
 	var newId = 10000 +Math.round(Math.random()*89999);
 	while(newId in mapOfIds) {
@@ -27,6 +30,9 @@ app.listen(3000, function() {
 	console.log('Beep Boop Banking on port 3000');
 });
 
+/**
+ * Post new acount with given name
+ */
 app.post('/account',function(req,res) {
 	if(typeof req.body.name == 'undefined' || req.body.name==null || req.body.name== ''){
 		res.status(400).send('You forgot to send the name.');
@@ -42,7 +48,9 @@ app.post('/account',function(req,res) {
 		res.status(200).send(newEntry);
 	}
 });
-
+/**
+ * Get state of an acount with given id
+ */
 app.get('/account/:id',function(req,res) {
 	if(typeof req.params.id == 'undefined' || req.params.id==null){
 		res.status(400).send('You forgot to give a request id.');
@@ -57,7 +65,9 @@ app.get('/account/:id',function(req,res) {
 		}
 	}
 });
-
+/**
+ * Post a deposit to an account with given id for a given amount
+ */
 app.post('/account/:id/deposit',function(req,res) {
 	if(typeof req.params.id == 'undefined' || req.params.id==null){
 		res.status(400).send('You forgot to give a request id.');
@@ -80,6 +90,9 @@ app.post('/account/:id/deposit',function(req,res) {
 	}
 });
 
+/**
+ * Post a withdrawal from an account with given id for a given amount
+ */
 app.post('/account/:id/withdraw',function(req,res) {
 	if(typeof req.params.id == 'undefined' || req.params.id==null){
 		res.status(400).send('You forgot to give a request id.');
@@ -106,3 +119,4 @@ app.post('/account/:id/withdraw',function(req,res) {
 		}
 	}
 });
+
