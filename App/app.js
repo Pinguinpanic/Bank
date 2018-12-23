@@ -20,21 +20,39 @@ function getNewId(){
 	return newId;
 };
 
+var innerState = [];
+
 //Open ears to port 3000, giving a yell if succesfull
 app.listen(3000, function() {
 	console.log('Beep Boop Banking on port 3000');
 });
 
 app.post('/account',function(req,res) {
-	var name = req.body.name;
 	if(typeof req.body.name == 'undefined' || req.body.name==null || req.body.name== ''){
 		res.status(400).send('You forgot to send the name.');
 	}
 	else {
-		res.status(200).send({
+		var name = req.body.name;
+		var newEntry = {
 			'name':name,
 			'balance':0,
 			'id':getNewId()
-		});
+		};
+		innerState[newEntry.id]=newEntry;
+		res.status(200).send(newEntry);
+	}
+});
+app.get('/account/:id',function(req,res) {
+	if(typeof req.params.id == 'undefined' || req.params.id==null){
+		res.status(400).send('You forgot to give an request id.');
+	}
+	else {
+		var id = req.params.id;
+		if(!(id in innerState)) {
+			res.status(400).send('Requesting none existing id '+id);
+		}
+		else {
+			res.status(200).send(innerState[id]);
+		}
 	}
 });

@@ -5,6 +5,9 @@ chai.use(chaiHttp);
 
 var appUrl = 'http://localhost:3000'
 
+/**
+ * Test set for creating a new account through POST
+ */
 describe('POST account', function() {
 	var request;
 	beforeEach(function() {
@@ -106,3 +109,77 @@ describe('POST account', function() {
 		});		
 	})
 });
+
+/**
+ * Test set for retreiving created accounts through GET
+ */
+describe('GET account', function() {
+	var request;
+	var testEntries =[{'name':'Pim Probeer'},{'name':'Tim Trial'},{'name':'Inge Inspectie'}]
+	before(function(done) {
+		//Create a nice initial state
+		chai.request(appUrl).post('/account').send(testEntries[0]).end(function(err,res) {
+			testEntries[0].id=res.body.id;
+			chai.request(appUrl).post('/account').send(testEntries[1]).end(function(err,res) {
+				testEntries[1].id=res.body.id;
+				chai.request(appUrl).post('/account').send(testEntries[2]).end(function(err,res) {
+					testEntries[2].id=res.body.id;
+					request = chai.request(appUrl);
+					done();
+				})
+			})
+		})
+	});
+	describe('should give an error',function() {
+		it('if id is null', function(done) {
+			request.get('/account/').send({}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();		
+			});
+		});
+		it('if id is not a number', function(done) {
+			request.get('/account/id').send({}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();	
+			});
+		});
+		it('if id is not defined', function(done) {
+			request.get('/account/10').send({}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();	
+			});
+		});	
+	});
+	it('Should return a correct entry for a given id', function(done) {
+		request.get('/account/'+testEntries[0].id).send({}).end(function(err,res) {
+			expect(res).to.not.be.empty;
+			expect(res.status).to.be.equal(200);
+			expect(res.body.name).to.be.equal(testEntries[0].name);
+			expect(res.body.id).to.be.equal(testEntries[0].id);
+			expect(res.body.balance).to.not.be.null;
+			done();		
+		});
+	});	
+	it('Should consitently deliver the correct content for two chained GETs', function(done) {
+		var balance;
+		request.get('/account/'+testEntries[1].id).send({}).end(function(err,res) {
+			expect(res).to.not.be.empty;
+			expect(res.status).to.be.equal(200);
+			expect(res.body.name).to.be.equal(testEntries[1].name);
+			expect(res.body.id).to.be.equal(testEntries[1].id);
+			var balance = res.body.balance
+			chai.request(appUrl).get('/account/'+testEntries[1].id).send({}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.be.equal(200);
+				expect(res.body.name).to.be.equal(testEntries[1].name);
+				expect(res.body.id).to.be.equal(testEntries[1].id);
+				expect(res.body.balance).to.be.equal(balance);
+				done();	
+			});
+		});
+	});		
+});
+
