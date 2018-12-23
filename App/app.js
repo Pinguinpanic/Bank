@@ -42,9 +42,10 @@ app.post('/account',function(req,res) {
 		res.status(200).send(newEntry);
 	}
 });
+
 app.get('/account/:id',function(req,res) {
 	if(typeof req.params.id == 'undefined' || req.params.id==null){
-		res.status(400).send('You forgot to give an request id.');
+		res.status(400).send('You forgot to give a request id.');
 	}
 	else {
 		var id = req.params.id;
@@ -52,6 +53,28 @@ app.get('/account/:id',function(req,res) {
 			res.status(400).send('Requesting none existing id '+id);
 		}
 		else {
+			res.status(200).send(innerState[id]);
+		}
+	}
+});
+
+app.post('/account/:id/deposit',function(req,res) {
+	if(typeof req.params.id == 'undefined' || req.params.id==null){
+		res.status(400).send('You forgot to give a request id.');
+	}
+	else if(typeof req.body.amount == 'undefined' || req.body.amount==null){
+		res.status(400).send('You forgot to send the amount to deposit.');
+	}
+	else {
+		var id = req.params.id;
+		if(!(id in innerState)) {
+			res.status(400).send('Trying to deposit for none existing account with id '+id);
+		}
+		else if(req.body.amount<=0) {
+			res.status(400).send('Requested deposit amount is not >0');
+		}
+		else {
+			innerState[id].balance+=req.body.amount;
 			res.status(200).send(innerState[id]);
 		}
 	}
