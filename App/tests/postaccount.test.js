@@ -270,7 +270,7 @@ describe('POST /account/:id/deposit', function() {
 describe('POST /account/:id/withdraw', function() {
 	var request;
 	var testEntries =[{'name':'Teun Test','balance':113},{'name':'Karel Keur','balance':7}]
-	before(function(done) {
+	beforeEach(function(done) {
 		//Create a nice initial state, this uses depositing.
 		chai.request(appUrl).post('/account').send(testEntries[0]).end(function(err,res) {
 			testEntries[0].id=res.body.id;
@@ -344,9 +344,9 @@ describe('POST /account/:id/withdraw', function() {
 	})
 	it("should decrease balance by the given amount for sequential withdrawing", function(done) {
 		request.post('/account/'+testEntries[1].id+'/withdraw').send({'amount':4}).end(function(err,res){
-			expect(res.body.balance).to.be.equal(3);
+			expect(res.body.balance).to.be.equal(testEntries[1].balance-4);
 			chai.request(appUrl).post('/account/'+testEntries[1].id+'/withdraw').send({'amount':2}).end(function(err,res){
-				expect(res.body.balance).to.be.equal(1);
+				expect(res.body.balance).to.be.equal(testEntries[1].balance-4-2);
 				done();
 			});
 		});
