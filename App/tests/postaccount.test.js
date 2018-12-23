@@ -113,7 +113,7 @@ describe('POST account', function() {
 /**
  * Test set for retreiving created accounts through GET
  */
-describe('GET account', function() {
+describe('GET /account/:id', function() {
 	var request;
 	var testEntries =[{'name':'Pim Probeer'},{'name':'Tim Trial'},{'name':'Inge Inspectie'}]
 	before(function(done) {
@@ -183,3 +183,83 @@ describe('GET account', function() {
 	});		
 });
 
+/**
+ * Test set for depositing to accounts
+ */
+describe('POST /account/:id/deposit', function() {
+	var request;
+	var testEntries =[{'name':'Pim Probeer'},{'name':'Tim Trial'},{'name':'Inge Inspectie'}]
+	before(function(done) {
+		//Create a nice initial state
+		chai.request(appUrl).post('/account').send(testEntries[0]).end(function(err,res) {
+			testEntries[0].id=res.body.id;
+			chai.request(appUrl).post('/account').send(testEntries[1]).end(function(err,res) {
+				testEntries[1].id=res.body.id;
+				chai.request(appUrl).post('/account').send(testEntries[2]).end(function(err,res) {
+					testEntries[2].id=res.body.id;
+					request = chai.request(appUrl);
+					done();
+				})
+			})
+		})
+	});
+	describe('should give an error',function() {
+		it('if id is null', function(done) {
+			request.post('/account//deposit').send({amount:10}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();		
+			});
+		});
+		it('if id is not a number', function(done) {
+			request.post('/account/id/deposit').send({amount:100}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();	
+			});
+		});
+		it('if id is not defined', function(done) {
+			request.post('/account/10/deposit').send({amount:1000}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();	
+			});
+		});	
+		it('if amount to deposit is 0', function(done) {
+			request.post('/account/'+testEntries[0].id+'/deposit').send({amount:0}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();	
+			});
+		});	
+		it('if amount to deposit is negative', function(done) {
+			request.post('/account/'+testEntries[1].id+'/deposit').send({amount:-10}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();	
+			});
+		});	
+		it('if amount to deposit is not given', function(done) {
+			request.post('/account/'+testEntries[2].id+'/deposit').send({}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();	
+			});
+		});			
+	});
+	it("should increase balance by the given amount by depositing", function(done) {
+		request.post('/account/'+testEntries[0].id+'/deposit').send({'amount':100}).end(function(err,res){
+			expect(res.body.balance).to.be.equal(100);
+			done();
+		});
+	})
+	it("should increase balance by the given amount for sequential depositing", function(done) {
+		request.post('/account/'+testEntries[1].id+'/deposit').send({'amount':150}).end(function(err,res){
+			expect(res.body.balance).to.be.equal(150);
+			chai.request(appUrl).post('/account/'+testEntries[1].id+'/deposit').send({'amount':80}).end(function(err,res){
+				expect(res.body.balance).to.be.equal(230);
+				done();
+			});
+		});
+	})	
+});
