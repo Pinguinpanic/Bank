@@ -263,3 +263,92 @@ describe('POST /account/:id/deposit', function() {
 		});
 	})	
 });
+
+/**
+ * Test set for withdrawing from accounts
+ */
+describe('POST /account/:id/withdraw', function() {
+	var request;
+	var testEntries =[{'name':'Teun Test','balance':113},{'name':'Karel Keur','balance':7}]
+	before(function(done) {
+		//Create a nice initial state, this uses depositing.
+		chai.request(appUrl).post('/account').send(testEntries[0]).end(function(err,res) {
+			testEntries[0].id=res.body.id;
+			chai.request(appUrl).post('/account/'+testEntries[0].id+'/deposit').send({'amount':testEntries[0].balance}).end(function(err,res) {
+				chai.request(appUrl).post('/account').send(testEntries[1]).end(function(err,res) {
+					testEntries[1].id=res.body.id;
+					chai.request(appUrl).post('/account/'+testEntries[1].id+"/deposit").send({'amount':testEntries[1].balance}).end(function(err,res) {
+						request = chai.request(appUrl);
+						done();
+					});
+				});
+			});
+		})
+	});
+	describe('should give an error',function() {
+		it('if id is null', function(done) {
+			request.post('/account//withdraw').send({amount:10}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();		
+			});
+		});
+		it('if id is not a number', function(done) {
+			request.post('/account/id/withdraw').send({amount:100}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();	
+			});
+		});
+		it('if id is not defined', function(done) {
+			request.post('/account/10/withdraw').send({amount:1000}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();	
+			});
+		});	
+		it('if amount to withdraw is 0', function(done) {
+			request.post('/account/'+testEntries[0].id+'/withdraw').send({amount:0}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();	
+			});
+		});	
+		it('if amount to withdraw is negative', function(done) {
+			request.post('/account/'+testEntries[1].id+'/withdraw').send({amount:-10}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();	
+			});
+		});	
+		it('if amount to withdraw is not given', function(done) {
+			request.post('/account/'+testEntries[0].id+'/withdraw').send({}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();	
+			});
+		});		
+		it('if amount to withdraw is greater then the current balance', function(done) {
+			request.post('/account/'+testEntries[1].id+'/withdraw').send({amount:600}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();	
+			});
+		});			
+	});
+	it("should decrease balance by the given amount by withdrawing", function(done) {
+		request.post('/account/'+testEntries[0].id+'/withdraw').send({'amount':50}).end(function(err,res){
+			expect(res.body.balance).to.be.equal(testEntries[0].balance-50);
+			done();
+		});
+	})
+	it("should decrease balance by the given amount for sequential withdrawing", function(done) {
+		request.post('/account/'+testEntries[1].id+'/withdraw').send({'amount':4}).end(function(err,res){
+			expect(res.body.balance).to.be.equal(3);
+			chai.request(appUrl).post('/account/'+testEntries[1].id+'/withdraw').send({'amount':2}).end(function(err,res){
+				expect(res.body.balance).to.be.equal(1);
+				done();
+			});
+		});
+	})	
+});
