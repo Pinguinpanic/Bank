@@ -352,3 +352,111 @@ describe('POST /account/:id/withdraw', function() {
 		});
 	})	
 });
+
+/**
+ * Test set for sending from account to account
+ */
+describe('POST /account/:id/send', function() {
+	var request;
+	var testEntries =[{'name':'Timo Test','balance':100},{'name':'Pietje Probeer','balance':25}]
+	beforeEach(function(done) {
+		//Create a nice initial state, this uses depositing.
+		chai.request(appUrl).post('/account').send(testEntries[0]).end(function(err,res) {
+			testEntries[0].id=res.body.id;
+			chai.request(appUrl).post('/account/'+testEntries[0].id+'/deposit').send({'amount':testEntries[0].balance}).end(function(err,res) {
+				chai.request(appUrl).post('/account').send(testEntries[1]).end(function(err,res) {
+					testEntries[1].id=res.body.id;
+					chai.request(appUrl).post('/account/'+testEntries[1].id+"/deposit").send({'amount':testEntries[1].balance}).end(function(err,res) {
+						request = chai.request(appUrl);
+						done();
+					});
+				});
+			});
+		})
+	});
+	describe('should give an error',function() {
+		it('if id is null', function(done) {
+			request.post('/account//send').send({amount:10, 'account-number':testEntries[0].id}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();		
+			});
+		});
+		it('if id is not a number', function(done) {
+			request.post('/account/id/send').send({amount:100, 'account-number':testEntries[0].id}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();	
+			});
+		});
+		it('if id is not defined', function(done) {
+			request.post('/account/10/send').send({amount:1000, 'account-number':testEntries[0].id}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();	
+			});
+		});	
+		it('if amount to send is 0', function(done) {
+			request.post('/account/'+testEntries[0].id+'/send').send({amount:0, 'account-number':testEntries[1].id}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();	
+			});
+		});	
+		it('if amount to send is negative', function(done) {
+			request.post('/account/'+testEntries[1].id+'/send').send({amount:-10, 'account-number':testEntries[0].id}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();	
+			});
+		});	
+		it('if amount to send is not given', function(done) {
+			request.post('/account/'+testEntries[0].id+'/send').send({'account-number':testEntries[1].id}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();	
+			});
+		});		
+		it('if amount to send is greater then the current balance', function(done) {
+			request.post('/account/'+testEntries[1].id+'/send').send({amount:600, 'account-number':testEntries[0].id}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();	
+			});
+		});	
+	it('if sender id is same as receiver id', function(done) {
+			request.post('/account/'+testEntries[0].id+'/send').send({amount:10, 'account-number':testEntries[0].id}).end(function(err,res) {
+				expect(res).to.not.be.empty;
+				expect(res.status).to.not.be.equal(200);
+				done();	
+			});
+		});		
+	});
+	it("should decrease balance from sender", function(done) {
+		request.post('/account/'+testEntries[0].id+'/send').send({amount:50, 'account-number':testEntries[1].id}).end(function(err,res){
+			expect(res.body.balance).to.be.equal(testEntries[0].balance-50);
+			done();
+		});
+	})
+	it("should increase balance from receiver", function(done) {
+		request.post('/account/'+testEntries[0].id+'/send').send({amount:50, 'account-number':testEntries[1].id}).end(function(err,res){
+			chai.request(appUrl).get('/acount/'+testEntries[1].id).send().end(function(err,res){
+				expect(res.body.balance).to.be.equal(testEntries[1].balance+50);
+				done();
+			});
+		});
+	})	
+	
+	it("should increase and decreance balance by the given amount for sequential sending", function(done) {
+		request.post('/account/'+testEntries[1].id+'/send').send({'amount':10, 'account-number':testEntries[0].id}).end(function(err,res){
+			expect(res.body.balance).to.be.equal(testEntries[1].balance-10);
+			chai.request(appUrl).post('/account/'+testEntries[1].id+'/send').send({'amount':20, 'account-number':testEntries[0].id}).end(function(err,res){
+				expect(res.body.balance).to.be.equal(testEntries[1].balance-10-20);
+				chai.request(appUrl).get('/acount/'+testEntries[0].id).send().end(function(err,res){
+					expect(res.body.balance).to.be.equal(testEntries[0].balance+10+20);
+					done();
+				});
+			});
+		});
+	})	
+});
