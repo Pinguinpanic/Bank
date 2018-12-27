@@ -145,8 +145,13 @@ description | String | A description of the event that took place
 
 ## Are you sure?
 
-In the App directory run
+You can test the application by running the tester while the application is running. First clean and run the application somewhere (warning, this clears your data!)
+```
+npm run clean
+npm start
+```
+Then when it's setup somewhere else run
 ```
 npm test
 ```
-to run the suite suite on the application.
+It will now test the application and show the results.

@@ -5,6 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
+	"clean": "echo {}>./data/data.json",
     "test": "mocha ./tests --recursive"
   },
   "author": "Bob de Vries",
