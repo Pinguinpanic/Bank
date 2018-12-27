@@ -21,7 +21,7 @@ router.post('/',function(req,res) {
 		var name = req.body.name;
 		var newEntry = new Account(name);
 		innerState[newEntry.id]=newEntry;
-		res.status(200).send(newEntry);
+		res.status(200).send(newEntry.getRepresentation());
 	}
 });
 /**
@@ -37,7 +37,7 @@ router.get('/:id',function(req,res) {
 			res.status(400).send('Requesting none existing id '+id);
 		}
 		else {
-			res.status(200).send(innerState[id]);
+			res.status(200).send(innerState[id].getRepresentation());
 		}
 	}
 });
@@ -61,7 +61,7 @@ router.post('/:id/deposit',function(req,res) {
 		}
 		else {
 			innerState[id].deposit(req.body.amount);
-			res.status(200).send(innerState[id]);
+			res.status(200).send(innerState[id].getRepresentation());
 		}
 	}
 });
@@ -90,7 +90,7 @@ router.post('/:id/withdraw',function(req,res) {
 			}		
 			else {
 				innerState[id].withdraw(req.body.amount);
-				res.status(200).send(innerState[id]);
+				res.status(200).send(innerState[id].getRepresentation());
 			}
 		}
 	}
@@ -130,8 +130,26 @@ router.post('/:id/send',function(req,res) {
 			}		
 			else {
 				Account.send(innerState[id],innerState[idTo],req.body.amount);
-				res.status(200).send(innerState[id]);
+				res.status(200).send(innerState[id].getRepresentation());
 			}
+		}
+	}
+});
+/**
+
+ * Get audit of an acount with given id
+ */
+router.get('/:id/audit',function(req,res) {
+	if(typeof req.params.id == 'undefined' || req.params.id==null){
+		res.status(400).send('You forgot to give a request id.');
+	}
+	else {
+		var id = req.params.id;
+		if(!(id in innerState)) {
+			res.status(400).send('Requesting none existing id '+id);
+		}
+		else {
+			res.status(200).send(innerState[id].getAudit());
 		}
 	}
 });

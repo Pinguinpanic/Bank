@@ -1,3 +1,7 @@
+/**
+ * This interface described how Account should be implemented.
+ */
+
 Account = function(name) {
 	//Initialize an account with given name, return it.
 }
@@ -15,12 +19,20 @@ Account.prototype.getBalance = function() {
 	//Return balance of this account
 };
 
+Account.prototype.getRepresentation = function() {
+	//Get a representation of this account with id, name and balance
+};
+
 Account.prototype.deposit = function(amount) {
 	//Deposit amount, return account.
 };
 
 Account.prototype.withdraw = function(amount) {
 	//Withdraw amount, return account.
+};
+
+Account.prototype.getAudit = function() {
+	//Return an audit of this account
 };
 
 Account.send = function(account1, account2, amount) {
