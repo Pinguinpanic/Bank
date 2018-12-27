@@ -5,21 +5,10 @@
 var express = require('express');
 var router = express.Router();
 
-var mapOfIds = [];
-var innerState = [];
+//Use direct memory implementation of Account for now.
+var Account = require('./../impl/accountMemory.js');
 
-/**
- * Generate a unique id in the range [10000...99999]
- */
-function getNewId(){
-	var newId = 10000 +Math.round(Math.random()*89999);
-	while(newId in mapOfIds) {
-		newId = 10000 +Math.round(Math.random()*89999)
-	}
-	//Mark that we are using this
-	mapOfIds[newId]=1;
-	return newId;
-};
+var innerState = [];
 
 /**
  * Post new acount with given name
@@ -30,11 +19,7 @@ router.post('/',function(req,res) {
 	}
 	else {
 		var name = req.body.name;
-		var newEntry = {
-			'name':name,
-			'balance':0,
-			'id':getNewId()
-		};
+		var newEntry = new Account(name);
 		innerState[newEntry.id]=newEntry;
 		res.status(200).send(newEntry);
 	}
@@ -75,7 +60,7 @@ router.post('/:id/deposit',function(req,res) {
 			res.status(400).send('Requested deposit amount is not >0');
 		}
 		else {
-			innerState[id].balance+=req.body.amount;
+			innerState[id].deposit(req.body.amount);
 			res.status(200).send(innerState[id]);
 		}
 	}
@@ -104,7 +89,7 @@ router.post('/:id/withdraw',function(req,res) {
 				res.status(400).send('Requested withdraw amount is higher then the balance.');
 			}		
 			else {
-				innerState[id].balance-=req.body.amount;
+				innerState[id].withdraw(req.body.amount);
 				res.status(200).send(innerState[id]);
 			}
 		}
@@ -144,8 +129,7 @@ router.post('/:id/send',function(req,res) {
 				res.status(400).send('Requested transfer amount is higher then the balance.');
 			}		
 			else {
-				innerState[id].balance-=req.body.amount;
-				innerState[idTo].balance+=req.body.amount;
+				Account.send(innerState[id],innerState[idTo],req.body.amount);
 				res.status(200).send(innerState[id]);
 			}
 		}
