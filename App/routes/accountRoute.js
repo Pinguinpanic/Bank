@@ -8,8 +8,6 @@ var router = express.Router();
 //Use direct memory implementation of Account for now.
 var Account = require('./../impl/accountMemory.js');
 
-var innerState = [];
-
 /**
  * Post new acount with given name
  */
@@ -20,8 +18,7 @@ router.post('/',function(req,res) {
 	else {
 		var name = req.body.name;
 		var newEntry = new Account(name);
-		innerState[newEntry.id]=newEntry;
-		res.status(200).send(newEntry.getRepresentation());
+		res.status(200).send(Account.getRepresentation(newEntry.id));
 	}
 });
 /**
@@ -33,11 +30,11 @@ router.get('/:id',function(req,res) {
 	}
 	else {
 		var id = req.params.id;
-		if(!(id in innerState)) {
+		if(! Account.exists(id)) {
 			res.status(400).send('Requesting none existing id '+id);
 		}
 		else {
-			res.status(200).send(innerState[id].getRepresentation());
+			res.status(200).send(Account.getRepresentation(id));
 		}
 	}
 });
@@ -53,15 +50,15 @@ router.post('/:id/deposit',function(req,res) {
 	}
 	else {
 		var id = req.params.id;
-		if(!(id in innerState)) {
+		if(! Account.exists(id)) {
 			res.status(400).send('Trying to deposit for none existing account with id '+id);
 		}
 		else if(req.body.amount<=0) {
 			res.status(400).send('Requested deposit amount is not >0');
 		}
 		else {
-			innerState[id].deposit(req.body.amount);
-			res.status(200).send(innerState[id].getRepresentation());
+			Account.deposit(id,req.body.amount);
+			res.status(200).send(Account.getRepresentation(id));
 		}
 	}
 });
@@ -78,19 +75,19 @@ router.post('/:id/withdraw',function(req,res) {
 	}
 	else {
 		var id = req.params.id;
-		if(!(id in innerState)) {
+		if(! Account.exists(id)) {
 			res.status(400).send('Trying to withdraw for none existing account with id '+id);
 		}
 		else if(req.body.amount<=0) {
 			res.status(400).send('Requested withdraw amount is not >0');
 		}
 		else {
-			if(req.body.amount>innerState[id].balance) {
+			if(req.body.amount>Account.getBalance(id)) {
 				res.status(400).send('Requested withdraw amount is higher then the balance.');
 			}		
 			else {
-				innerState[id].withdraw(req.body.amount);
-				res.status(200).send(innerState[id].getRepresentation());
+				Account.withdraw(id,req.body.amount);
+				res.status(200).send(Account.getRepresentation(id));
 			}
 		}
 	}
@@ -112,10 +109,10 @@ router.post('/:id/send',function(req,res) {
 	else {
 		var id = req.params.id;
 		var idTo = req.body.receiverid;
-		if(!(id in innerState)) {
+		if(! Account.exists(id)) {
 			res.status(400).send('Trying to send for none existing account with id '+id);
 		}
-		else if (!(idTo in innerState)) {
+		else if (! Account.exists(idTo)) {
 			res.status(400).send('Trying to send to none existing account with id '+idTo);
 		}
 		else if (idTo == id) {
@@ -125,12 +122,12 @@ router.post('/:id/send',function(req,res) {
 			res.status(400).send('Requested transfer amount is not >0');
 		}
 		else {
-			if(req.body.amount>innerState[id].balance) {
+			if(req.body.amount>Account.getBalance(id)) {
 				res.status(400).send('Requested transfer amount is higher then the balance.');
 			}		
 			else {
-				Account.send(innerState[id],innerState[idTo],req.body.amount);
-				res.status(200).send(innerState[id].getRepresentation());
+				Account.send(id,idTo,req.body.amount);
+				res.status(200).send(Account.getRepresentation(id));
 			}
 		}
 	}
@@ -145,11 +142,11 @@ router.get('/:id/audit',function(req,res) {
 	}
 	else {
 		var id = req.params.id;
-		if(!(id in innerState)) {
+		if(! Account.exists(id)) {
 			res.status(400).send('Requesting none existing id '+id);
 		}
 		else {
-			res.status(200).send(innerState[id].getAudit());
+			res.status(200).send(Account.getAudit(id));
 		}
 	}
 });

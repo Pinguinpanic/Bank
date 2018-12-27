@@ -7,36 +7,41 @@ Account = function(name) {
 }
 Account.constructor = Account;
 
-Account.prototype.getName = function() {
-	//Return name of this account.
+Account.getName = function(id) {
+	//Return name of given account.
 };
 
-Account.prototype.getId = function() {
-	//Return id of this account
+Account.getId = function(id) {
+	//Return id of given account
 };
 
-Account.prototype.getBalance = function() {
-	//Return balance of this account
+Account.getBalance = function(id) {
+	//Return balance of given account
 };
 
-Account.prototype.getRepresentation = function() {
-	//Get a representation of this account with id, name and balance
+Account.getRepresentation = function(id) {
+	//Get a representation of given account with id, name and balance
 };
 
-Account.prototype.deposit = function(amount) {
+Account.deposit = function(id,amount) {
 	//Deposit amount, return account.
 };
 
-Account.prototype.withdraw = function(amount) {
+Account.withdraw = function(id,amount) {
 	//Withdraw amount, return account.
 };
 
-Account.prototype.getAudit = function() {
+Account.getAudit = function(id) {
 	//Return an audit of this account
 };
 
 Account.send = function(account1, account2, amount) {
 	//Static, sent ammount from account1 to account 2
+};
+
+
+Account.exists = function(id) {
+	//Static, returns if given id exists
 };
 
 module.exports = Account;

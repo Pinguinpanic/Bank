@@ -3,16 +3,31 @@
  * keeping state.
  */
 var Account = require('./../models/account.js');
+var ini = require('./../ini.js');
+//Open file reader
+var fs = require('fs');
 
+//Load the mapping of Ids to keep track of what IDs are free
 var mapOfIds = [];
+var accountState;
+
+fs.readFile(ini.data, function(err,data) {
+	if (err) {
+		throw err
+	}
+	accountState = JSON.parse(data);
+	for(e in accountState) {
+		mapOfIds[accountState.id]=1;
+	}
+});
 
 /**
  * Generate a unique id in the range [10000...99999]
  */
 function getNewId(){
-	var newId = 10000 +Math.round(Math.random()*89999);
+	var newId = 10000 +Math.round(Math.random()*89999)+'';
 	while(newId in mapOfIds) {
-		newId = 10000 +Math.round(Math.random()*89999)
+		newId = 10000 +Math.round(Math.random()*89999)+'';
 	}
 	//Mark that we are using this
 	mapOfIds[newId]=1;
@@ -24,67 +39,86 @@ Account = function(name) {
 	this.id = getNewId();
 	this.balance = 0;
 	this.audits = [];
-	return this;
+	accountState[this.id]=(this);
+	fs.writeFileSync(ini.data,JSON.stringify(accountState));
+	return {'name':this.name,'id':this.id,'balance':this.balance};
 }
 Account.constructor = Account;
 
-Account.prototype.getName = function() {
-	return this.name;
+Account.getName = function(id) {
+	return accountState[id].name;
 };
 
-Account.prototype.getId = function() {
-	return this.id;
+Account.getId = function(id) {
+	return accountState[id].id;
 };
 
-Account.prototype.getBalance = function() {
-	return this.balance;
+Account.getBalance = function(id) {
+	return accountState[id].balance;
 };
 
-Account.prototype.addAuditEntry = function(debit,credit,description) {
+Account.addAuditEntry = function(id,debit,credit,description) {
+	var ac = accountState[id];
 	var audit = {
-		'sequence': this.audits.length+1,
+		'sequence': ac.audits.length+1,
 		'credit': credit,
 		'debit': debit,
 		'description': description
 	}
-	this.audits.push(audit);
+	ac.audits.push(audit);
+	fs.writeFileSync(ini.data,JSON.stringify(accountState));
 }
 
-Account.prototype.getRepresentation = function() {
-	return {'name':this.name,'id':this.id,'balance':this.balance};
+Account.getRepresentation = function(id) {
+	var ac = accountState[id];
+	return {'name':ac.name,'id':ac.id,'balance':ac.balance};
 };
 
-Account.prototype.deposit = function(amount) {
+Account.deposit = function(id,amount) {
 	if(amount>0) {
-		this.balance+=amount;
-		this.addAuditEntry(0,amount,'deposit')
+		accountState[id].balance+=amount;
+		Account.addAuditEntry(id,0,amount,'deposit');
+		fs.writeFileSync(ini.data,JSON.stringify(accountState));
 		return this;
 	}
 	return new Error('Can not deposit ammount<=0');
 };
 
-Account.prototype.withdraw = function(amount) {
+Account.withdraw = function(id,amount) {
 	if(amount>0) {
-		this.balance-=amount;
-		this.addAuditEntry(amount,0,'withdraw')
+		accountState[id].balance-=amount;
+		Account.addAuditEntry(id,amount,0,'withdraw');
+		fs.writeFileSync(ini.data,JSON.stringify(accountState));
 		return this;
 	}
 	return new Error('Can not deposit ammount<=0');
 };
 
-Account.prototype.getAudit = function() {
-	return this.audits.reverse();
+Account.getAudit = function(id) {
+	return accountState[id].audits.reverse();
 };
 
-Account.send = function(account1, account2, amount) {
+Account.send = function(id1, id2, amount) {
 	if(amount>0) {
-		account1.balance-=amount;
-		account1.addAuditEntry(amount,0,'send to #'+account2.getId());
-		account2.balance+=amount;
-		account2.addAuditEntry(0,amount,'receive from #'+account1.getId());
-		return this;
+		accountState[id1].balance-=amount;
+		Account.addAuditEntry(id1,amount,0,'send to #'+id2);
+		accountState[id2].balance+=amount;
+		Account.addAuditEntry(id2,0,amount,'receive from #'+id1);
+		fs.writeFileSync(ini.data,JSON.stringify(accountState));
+		return Account.getRepresentation(id1);
 	}
 	return new Error('Can not deposit ammount<=0');
+};
+
+Account.get = function(id) {
+	return accountState[id];
+};
+
+Account.exists = function(id) {
+	if(id==null || typeof id == 'undefined' || typeof mapOfIds[id] == 'undefined' || mapOfIds[id]==null) {
+		return false;
+	}
+	return true;
 };
 
 module.exports = Account;
