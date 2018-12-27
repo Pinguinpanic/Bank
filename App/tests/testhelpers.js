@@ -1,9 +1,15 @@
+/**
+ * This script sets up some functions to help test.
+ */
 var chai = require('chai');
 var chaiHttp = require('chai-http');
 var expect = chai.expect;
 chai.use(chaiHttp);
 
-var appUrl = 'http://localhost:3000'
+var ini = require('./../ini.js');
+var appUrl = ini.appUrl;
+
+//Global module variable for recording state.
 var testEntries = [];
 
 /**
@@ -63,10 +69,12 @@ function initializeState(entries,done,state) {
 				request = postJSON('/account/'+e.id+'/deposit',{'amount':e.balance});
 				request.end(function(err,res) {
 					expectNoError(err,res);
+					//We force sequential calls by calling next call in the callback.
 					initializeState(entries,done,state+1)
 				})
 			}
 			else {
+				//We force sequential calls by calling next call in the callback.
 				initializeState(entries,done,state+1);
 			}
 		});
