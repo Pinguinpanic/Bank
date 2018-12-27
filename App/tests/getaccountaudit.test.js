@@ -44,7 +44,7 @@ describe('GET /account/:id/audit', function() {
 			getJSON('/account/'+getEntries()[0].id+'/audit').end(function(err,res) {
 				expectNoError(err,res);
 
-				expect(res.body).to.be.equal({});
+				expect(res.body).to.be.empty;
 				done();
 			});		
 	});	
@@ -112,7 +112,7 @@ describe('GET /account/:id/audit', function() {
 					expect(res.body[1].description).to.be.equal('deposit');
 					
 					//Check receiver
-					getJSON('/account/'+getEntries()[0].id+'/audit').end(function(err,res) {
+					getJSON('/account/'+getEntries()[1].id+'/audit').end(function(err,res) {
 						expectNoError(err,res);
 						expect(res.body).not.be.empty;
 						//Check if the sending is correct and listed first
@@ -120,6 +120,7 @@ describe('GET /account/:id/audit', function() {
 						expect(res.body[0].sequence).to.be.equal(1);
 						expect(res.body[0].credit).to.be.equal(30);
 						expect(res.body[0].description).to.be.equal('receive from #'+getEntries()[0].id);
+						done();
 					});
 				})					
 			});
